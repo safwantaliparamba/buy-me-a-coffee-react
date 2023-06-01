@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 import styled, { keyframes } from 'styled-components';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 // import { env } from '../../../App';
 import curveIcon from "../../../assets/icons/curve.svg"
@@ -9,20 +9,25 @@ import closeIcon from "../../../assets/icons/close.svg"
 import eyeIcon from "../../../assets/icons/eye.svg"
 import hideEyeIcon from "../../../assets/icons/hide-eye.svg"
 import googleLogo from "../../../assets/images/google-logo.svg"
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../includes/ToggleTheme';
+import api from '../../../config/axios';
+import { login } from '../../../store/authSlice';
 
 
 
 const SignIn = ({ type = "SIGNUP" }) => {
     const theme = useSelector(state => state.ui.theme)
 
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+
     const inputsInitialState = {
         name: "",
         email: "",
         password: "",
     }
-    const [errorMessage, setErrorMessage] = useState("username or password is incorrect")
+    const [errorMessage, setErrorMessage] = useState("")
     const [isShow, setShow] = useState(false)
     const [inputs, setInputs] = useState({ ...inputsInitialState })
 
@@ -30,14 +35,37 @@ const SignIn = ({ type = "SIGNUP" }) => {
         setInputs({ ...inputsInitialState })
     }, [location.pathname])
 
-    const onChange = (e) => {
-        setInputs({ ...inputs, [e.target.name]: e.target.value })
-    }
-    const toggleShow = () => {
-        setShow(!isShow)
-    }
+    const onChange = (e) => setInputs({ ...inputs, [e.target.name]: e.target.value })
+
+    const toggleShow = () => setShow(!isShow)
 
     const closeErrorMessage = () => setErrorMessage("")
+
+    const SignupHandler = () => {
+        var url = "/accounts/register/"
+
+        if (type === "SIGNIN") {
+            url = "/accounts/login/"
+        }
+
+        api
+            .post(url, { ...inputs })
+            .then((res) => {
+                const { statusCode, data } = res.data
+
+                if (statusCode === 6000) {
+                    dispatch(login({
+                        email: data.email,
+                        name: data.name,
+                        access: data.access,
+                        refresh: data.refresh
+                    }))
+                    navigate("/")
+                } else {
+                    setErrorMessage(data.message)
+                }
+            })
+    }
 
     return (
         <Wrapper theme={theme}>
@@ -81,7 +109,7 @@ const SignIn = ({ type = "SIGNUP" }) => {
                                 <img src={!isShow ? eyeIcon : hideEyeIcon} alt="" onClick={toggleShow} />
                             </div>
                         </InputContainer>
-                        <SubmitButton>
+                        <SubmitButton onClick={SignupHandler}>
                             Continue
                         </SubmitButton>
                     </Form>
@@ -136,7 +164,7 @@ const Top = styled.div`
     .left h1{
         font-size: 24px;
         font-weight: 600;
-        color: ${({theme}) => theme === "DARK" ? "#fff" : "#111"};
+        color: ${({ theme }) => theme === "DARK" ? "#fff" : "#111"};
     }
 `
 
