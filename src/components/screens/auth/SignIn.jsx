@@ -28,6 +28,7 @@ const SignIn = ({ type = "SIGNUP" }) => {
         password: "",
     }
     const [errorMessage, setErrorMessage] = useState("")
+    const [isError, setError] = useState("")
     const [isShow, setShow] = useState(false)
     const [inputs, setInputs] = useState({ ...inputsInitialState })
 
@@ -39,7 +40,7 @@ const SignIn = ({ type = "SIGNUP" }) => {
 
     const toggleShow = () => setShow(!isShow)
 
-    const closeErrorMessage = () => setErrorMessage("")
+    const closeErrorMessage = () => setError("close")
 
     const SignupHandler = () => {
         var url = "/accounts/register/"
@@ -62,6 +63,7 @@ const SignIn = ({ type = "SIGNUP" }) => {
                     }))
                     navigate("/")
                 } else {
+                    setError("active")
                     setErrorMessage(data.message)
                 }
             })
@@ -83,7 +85,7 @@ const SignIn = ({ type = "SIGNUP" }) => {
                     </Header>
                     <Form>
                         <ErrorMessageContainer
-                            className={errorMessage.trim().length > 0 ? "active" : "close"}
+                            className={isError}
                         >
                             <span>{errorMessage}</span>
                             <img
