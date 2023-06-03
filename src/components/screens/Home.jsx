@@ -1,19 +1,18 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 import Header from '../includes/Header'
-import axios from 'axios'
-import api from '../../config/axios'
 import { authApi } from '../../config/axios'
 
 
 const Home = () => {
     const [isPaid, setPaid] = useState("")
+    const [donationAmount, setAmount] = useState(0)
+    const [name, setName] = useState("")
 
-    // this will load a script tag which will open up Razorpay payment card to make //transactions
     const loadScript = async () => {
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
+
         document.body.appendChild(script);
     };
 
@@ -25,7 +24,9 @@ const Home = () => {
 
                 if (statusCode === 6000) {
                     setPaid("SUCCESS")
-                }else{
+                    setAmount("")
+                    setName("")
+                } else {
                     setPaid("FAILED")
                 }
             })
@@ -33,11 +34,12 @@ const Home = () => {
     }
 
     const showRazorpay = async () => {
-        const res = await loadScript();
+        await loadScript();
+        await loadScript();
 
         const formData = new FormData()
 
-        formData.append("amount", "10")
+        formData.append("amount", donationAmount.toString())
         formData.append("user_id", "a74b25d6-2bfb-4b2f-b8cd-a60a8f3e8e16")
 
         const { data, statusCode } = await authApi
@@ -49,19 +51,15 @@ const Home = () => {
             var options = {
                 key_id: import.meta.VITE_APP_PUBLIC_KEY, // in react your environment variable must start with REACT_APP_
                 key_secret: import.meta.VITE_APP_SECRET_KEY,
-                amount: 10,
+                amount: +donationAmount,
                 currency: "INR",
                 name: "Buy me a coffee",
-                description: "Test teansaction",
+                description: "Test transaction",
                 image: "", // add image url
                 order_id: data.order_id,
-                handler: function (response) {
-                    // we will handle success by calling handlePaymentSuccess method and
-                    // will pass the response that we've got from razorpay
-                    handlePaymentSuccess(response);
-                },
+                handler: handlePaymentSuccess,
                 prefill: {
-                    name: data.name,
+                    name: name,
                     email: data.email,
                 },
                 notes: {
@@ -83,8 +81,24 @@ const Home = () => {
             <Wrapper>
                 {isPaid === "SUCCESS" && <h1>Payment Success</h1>}
                 {isPaid === "FAILED" && <h1 className="failed">Payment Failed</h1>}
+                <InputContainer>
+                    <input
+                        type="text"
+                        value={name}
+                        placeholder="Name"
+                        onChange={e => setName(e.target.value)}
+                    />
+                </InputContainer>
+                <InputContainer>
+                    <input
+                        type="text"
+                        value={donationAmount}
+                        placeholder='Amount'
+                        onChange={e => setAmount(e.target.value)}
+                    />
+                </InputContainer>
                 <Button onClick={showRazorpay}>
-                    Pay
+                    Donate
                 </Button>
             </Wrapper>
         </>
@@ -112,9 +126,22 @@ const Wrapper = styled.section`
     }
 `
 const Button = styled.button`
+    width: 350px;
     padding: 8px 16px;
-    border: 1px solid #111;
     border-radius: 6px;
     font-size: 17px;
+    font-weight: 600;
     cursor: pointer;
+    color: #fff;
+    background-color: #30a1c7;
+`
+const InputContainer = styled.div`
+    margin-bottom: 28px;
+
+    input{
+        width: 350px;
+        border: 1px solid #111;
+        border-radius: 8px;
+        padding: 8px 16px;
+    }
 `
